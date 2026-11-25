@@ -1,5 +1,3 @@
-import time
-
 import allure
 import pytest
 from selenium import webdriver
@@ -47,6 +45,6 @@ def test_slow_calculator(driver: webdriver.Chrome) -> None:
             page.press(button)
 
     with allure.step("Проверяем, что на экране появилось 15"):
-        time.sleep(50)  # ждём, пока калькулятор досчитает с задержкой 45 секунд
-        result = page.get_result()
+        result = page.wait_for_result("15")
         assert result == "15", f"Ожидали 15, на экране: {result}"
+

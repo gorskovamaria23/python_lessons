@@ -1,3 +1,5 @@
+import time
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -22,25 +24,55 @@ class CalculatorPage(Page):
         """
         field = self.driver.find_element(*self.DELAY_INPUT)
         field.clear()
-        field.send_keys(str(seconds))
+        field.send_keys(seconds)
 
     def press(self, button: str) -> None:
-        """Нажимает кнопку калькулятора с заданным текстом.
+        """Нажимает кнопку калькулятора по её тексту.
 
         Args:
-            button (str): надпись на кнопке, например "7" или "+".
+            button (str): символ на кнопке: цифра, "+" или "=".
 
         Returns:
             None
         """
         self.driver.find_element(
-            By.XPATH, f"//span[normalize-space(text())='{button}']"
+            By.XPATH, f"//span[text()='{button}']"
         ).click()
 
     def get_result(self) -> str:
-        """Возвращает текст на экране калькулятора.
+        """Возвращает текущий текст на экране калькулятора.
 
         Returns:
-            str: текущее значение на экране.
+            str: текст на экране, например "15" или "Pending operation...".
         """
         return self.driver.find_element(*self.SCREEN).text
+
+    def wait_for_result(self, expected: str, timeout: int = 60, interval: float = 0.5) -> str:
+        """Опрашивает экран калькулятора, пока не появится ожидаемый результат.
+
+        Args:
+            expected (str): ожидаемый текст на экране, например "15".
+            timeout (int): максимальное время ожидания в секундах.
+            interval (float): пауза между опросами экрана в секундах.
+
+        Returns:
+            str: фактический текст на экране калькулятора.
+
+        Raises:
+            TimeoutError: если за отведённое время результат не появился.
+        """
+        deadline = time.time() + timeout
+
+        while time.time() < deadline:
+            result = self.get_result()
+
+            if result == expected:
+                return result
+
+            time.sleep(interval)
+
+        raise TimeoutError(
+            f"За {timeout} секунд на экране не появилось '{expected}'. "
+            f"Последнее значение: '{self.get_result()}'"
+        )
+
