@@ -1,7 +1,7 @@
-import time
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 from pages.page import Page
 
@@ -47,32 +47,24 @@ class CalculatorPage(Page):
         """
         return self.driver.find_element(*self.SCREEN).text
 
-    def wait_for_result(self, expected: str, timeout: int = 60, interval: float = 0.5) -> str:
-        """Опрашивает экран калькулятора, пока не появится ожидаемый результат.
+    def wait_for_result(self, expected: str, timeout: int = 60) -> str:
+        """Дожидается появления ожидаемого результата на экране калькулятора.
+
+        Использует явное ожидание WebDriverWait: проверка повторяется
+        автоматически, пока на экране не появится нужное значение.
 
         Args:
             expected (str): ожидаемый текст на экране, например "15".
             timeout (int): максимальное время ожидания в секундах.
-            interval (float): пауза между опросами экрана в секундах.
 
         Returns:
             str: фактический текст на экране калькулятора.
 
         Raises:
-            TimeoutError: если за отведённое время результат не появился.
+            TimeoutException: если за отведённое время результат не появился.
         """
-        deadline = time.time() + timeout
-
-        while time.time() < deadline:
-            result = self.get_result()
-
-            if result == expected:
-                return result
-
-            time.sleep(interval)
-
-        raise TimeoutError(
-            f"За {timeout} секунд на экране не появилось '{expected}'. "
-            f"Последнее значение: '{self.get_result()}'"
+        WebDriverWait(self.driver, timeout).until(
+            EC.text_to_be_present_in_element(self.SCREEN, expected)
         )
+        return self.get_result()
 
